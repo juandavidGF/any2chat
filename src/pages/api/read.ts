@@ -1,14 +1,14 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { OpenAIEmbeddings } from "langchain/embeddings/openai"
+import { PineconeClient } from '@pinecone-database/pinecone';
+import { queryPineconeVectorStoreAndQueryLLM } from '@/utils/utils'
 
 
 type Data = {
-  name?: string,
+  data?: string,
 	error?: string,
-} | any;
-
-const indexName = 'attentionIsAllYouNeed1'
+}
 
 export default async function handler(
   req: NextApiRequest,
@@ -20,33 +20,23 @@ export default async function handler(
   }
 
 	try {
-		const question = await req.body;
-	
-		console.log('read0');
-	
-		const client = (weaviate as any).client({
-			scheme: process.env.WEAVIATE_SCHEME || "https",
-			host: process.env.WEAVIATE_HOST || "localhost",
-		});
-		
 		console.log('read1');
-		// Create a store for an existing index
-		const store = await WeaviateStore.fromExistingIndex(new OpenAIEmbeddings(), {
-			client,
-			indexName: indexName
-		});
+		const question = await req.body;
+
+		const client = new PineconeClient()
+		await client.init({
+			apiKey: process.env.PINECONE_API_KEY || '',
+			environment: process.env.PINECONE_ENVIRONMENT || ''
+		})
+
 		console.log('read2');
-	
-	
-		// Search the index without any filters
-		const results = await store.similaritySearch(question, 1);
+
+		const indexName = 'attention-is-all-you-need-1'
+		const text = await queryPineconeVectorStoreAndQueryLLM(client, indexName, question)
 		console.log('read3');
-		console.log(results);
-	
-		res.status(200).json({ results })
+		res.status(200).json({ data: text })
 	} catch (error) {
 		console.log(error)
-		res.status(500)
+		res.status(500).json({ error: (error as Error).message || 'An error occurred on the server.' })
 	}
-
 }

@@ -2,6 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai'
 import { PineconeClient } from "@pinecone-database/pinecone";
+import { PineconeStore } from "langchain/vectorstores/pinecone";
 import { TextLoader } from 'langchain/document_loaders/fs/text'
 import { DirectoryLoader } from 'langchain/document_loaders/fs/directory'
 import { PDFLoader } from "langchain/document_loaders/fs/pdf";
@@ -11,7 +12,7 @@ import {
   JSONLinesLoader,
 } from "langchain/document_loaders/fs/json";
 
-import { createPineconeIndex, updatePinecone, updateWeaviate } from '@/utils/utils'
+import { createPineconeIndex, updatePinecone } from '@/utils/utils'
 
 type Data = {
   name?: string,
@@ -31,11 +32,12 @@ export default async function handler(
 	try {
 		const loader = new PDFLoader("src/documents/paper.pdf");
 		const docs = await loader.load();
+		console.log("setup1====>", typeof docs);
 	
-		const indexName = 'attentionIsAllYouNeed1'
+		const indexName = 'attention-is-all-you-need-1'
 		const vectorDimensions = 1536
 	
-		const client = new PineconeClient()
+		const client: PineconeClient = new PineconeClient()
 		await client.init({
 			apiKey: process.env.PINECONE_API_KEY || '',
 			environment: process.env.PINECONE_ENVIRONMENT || ''
@@ -43,7 +45,7 @@ export default async function handler(
 
 		await createPineconeIndex(client, indexName, vectorDimensions)
 		await updatePinecone(client, indexName, docs)
-		// await updateWeaviate(client, docs);
+
 		res.status(200).json({ name: 'success' })
 	} catch (error) {
 		console.log(error)
