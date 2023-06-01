@@ -16,7 +16,6 @@ export default function Home() {
         method: "POST"
       })
       const json = await result.json()
-      console.log('result: ', json)
     } catch (err) {
       console.log('err:', err)
     }
@@ -32,7 +31,6 @@ export default function Home() {
         method: "POST",
         body: JSON.stringify(query)
       })
-			console.log('sendQuery result: ', result);
       const json = await result.json()
       setResult(json.data)
       setLoading(false)
