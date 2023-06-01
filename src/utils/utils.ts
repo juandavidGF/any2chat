@@ -7,6 +7,12 @@ import weaviate, { WeaviateClient } from "weaviate-ts-client";
 import { WeaviateStore } from "langchain/vectorstores/weaviate";
 import { PineconeClient } from '@pinecone-database/pinecone'
 
+interface Match {
+  metadata?: {
+    pageContent: string;
+  };
+}
+
 export const queryPineconeVectorStoreAndQueryLLM = async (
   client: PineconeClient,
   indexName: string,
@@ -36,7 +42,7 @@ export const queryPineconeVectorStoreAndQueryLLM = async (
     const llm = new OpenAI({});
     const chain = loadQAStuffChain(llm);
 // 8. Extract and concatenate page content from matched documents
-    const concatenatedPageContent = queryResponse.matches
+    const concatenatedPageContent = (queryResponse.matches as Match[])
       .map((match) => match.metadata?.pageContent)
       .join(" ");
 // 9. Execute the chain with input documents and question
